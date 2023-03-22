@@ -207,6 +207,11 @@ static CGFloat const      minDividerWidth     = 75.0f;
 
     // The window accepts mouse move events
     [[self window] setAcceptsMouseMovedEvents:YES];
+
+    // When a document is opened, its change count is
+    // immediatedly incremented, although it has no changes.
+    // We reset that here.
+    [[self document] updateChangeCount:NSChangeCleared];
 }
 
 - (void) windowWillClose: (NSNotification*) not {
