@@ -737,15 +737,16 @@ CGFloat easeOutCubic(CGFloat t) {
     NSFileManager* fm = [NSFileManager defaultManager];
     NSError *error;
 
-    // create a new empty folder (unzipping will fail if any of the payload files already
-    // exist at the target location)
+    // create a new empty folder (to get a clean unzip)
     [fm createDirectoryAtURL: targetDirectory
  withIntermediateDirectories: YES
                   attributes: nil
                        error: &error];
 
     //now create an unzip task
-    NSArray *arguments = @[zipURL.path];
+    // -o overwrites existing files
+    // -x ignores any *.DS_Store and __MACOSX detritus (Note the -x argument must appear after the zip file)
+    NSArray *arguments = @[@"-o", zipURL.path, @"-x", @"*.DS_Store", @"__MACOSX/*"];
     NSTask *unzipTask = [[NSTask alloc] init];
     unzipTask.launchPath = @"/usr/bin/unzip";
     unzipTask.currentDirectoryURL = targetDirectory;

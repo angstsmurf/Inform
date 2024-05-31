@@ -159,8 +159,7 @@ Global take_all_rule;               ! Slightly different rules apply to "take al
                                     ! pragmatically useful results
                                     ! (Not a flag: possible values 0, 1, 2)
 
-Global dict_flags_of_noun;          ! Of the noun currently being parsed
-                                    ! (a bitmap in #dict_par1 format)
+Global current_noun_is_plural;      ! True or false
 Global pronoun__word;               ! Saved value
 Global pronoun__obj;                ! Saved value
 
@@ -327,8 +326,7 @@ are above 32K. This only rarely happens, but it can.
 	buffer-->0 = at+i;
 	for (:at+i<INPUT_BUFFER_LEN:i++) buffer-->(at+i) = ' ';
 	#endif;
-	VM_Tokenise(buffer, parse);
-	players_command = 100 + WordCount();
+	TokeniseInput(buffer, parse);
 	buffer2-->0 = saved;
 	@pull say__pc; @pull say__p;
 ];
@@ -550,7 +548,7 @@ The return value is the number of words typed.
 			#Ifnot;
 			for (i=0 : i<64 : i++) a_buffer-->i = oops_workspace-->i;
 			#Endif;
-			VM_Tokenise(a_buffer,a_table);
+			TokeniseInput(a_buffer,a_table);
 
 			! Work out the position in the buffer of the word to be corrected:
 			#Iftrue CHARSIZE == 1;
@@ -593,7 +591,7 @@ The return value is the number of words typed.
 			for (i=0 : i<x2 : i++) a_buffer-->(i+w) = buffer2-->(i+x1);
 			#Endif;
 
-			VM_Tokenise(a_buffer, a_table);
+			TokeniseInput(a_buffer, a_table);
 			#Iftrue CHARSIZE == 1;
 			nw = a_table->1;
 			#Ifnot;
@@ -628,6 +626,12 @@ The return value is the number of words typed.
 	SL_Location(); print "^";
 	VM_Style(NORMAL_VMSTY);
 	IMMEDIATELY_UNDO_RM('E'); new_line;
+];
+
+[ TokeniseInput buf tab;
+  VM_Tokenise(buf, tab);
+  num_words = WordCount();
+  players_command = 100 + num_words;
 ];
 
 @h Parser Proper.
@@ -696,7 +700,7 @@ Get the input, do OOPS and AGAIN.
             #Endif;
         }
 
-        VM_Tokenise(buffer, parse);
+        TokeniseInput(buffer, parse);
         jump ReParse;
     }
 
@@ -715,14 +719,14 @@ Get the input, do OOPS and AGAIN.
     ! Initially assume the command is aimed at the player, and the verb
     ! is the first word
 
-    num_words = WordCount(); players_command = 100 + num_words;
+    ! num_words = WordCount(); players_command = 100 + num_words;
     wn = 1; inferred_go = false;
 
     LanguageToInformese();
     ! Re-tokenise:
-    VM_Tokenise(buffer,parse);
+    TokeniseInput(buffer,parse);
 
-    num_words = WordCount(); players_command = 100 + num_words; token_filter = 0;
+    token_filter = 0;
     allow_plurals = true; ResetDescriptors();
 
     k=0;
@@ -801,8 +805,7 @@ Get the input, do OOPS and AGAIN.
         #Ifnot;
         for (i=0 : i<INPUT_BUFFER_LEN : i++) buffer-->i = buffer3-->i;
         #Endif;
-        VM_Tokenise(buffer,parse);
-        num_words = WordCount(); players_command = 100 + num_words;
+        TokeniseInput(buffer,parse);
         jump ReParse;
     }
 
@@ -854,7 +857,7 @@ Is the command a direction name, and so an implicit GO? If so, go to (K).
     ! If the first word is not listed as a verb, it must be a direction
     ! or the name of someone to talk to
 
-    if (verb_word == 0 || ((verb_word->#dict_par1) & 1) == 0) {
+    if (WordMarkedAsVerb(verb_word) == false) {
         ! So is the first word an object contained in the special object "compass"
         ! (i.e., a direction)?  This needs use of NounDomain, a routine which
         ! does the object matching, returning the object number, or 0 if none found,
@@ -913,7 +916,7 @@ Is anyone being addressed?
 	scope_reason = PARSING_REASON;
 	if (l == REPARSE_CODE) jump ReParse;
 	if (l == 0) {
-		if (verb_word && ((verb_word->#dict_par1) & 1)) jump NotConversation;
+		if (WordMarkedAsVerb(verb_word)) jump NotConversation;
 		best_etype = MISSINGPERSON_PE; jump GiveError;
 	}
 
@@ -931,7 +934,7 @@ Is anyone being addressed?
 	! name and the comma (eg, throw out "dwarf sdfgsdgs, go north").
 
 	if (wn ~= j) {
-		if (verb_word && ((verb_word->#dict_par1) & 1)) jump NotConversation;
+		if (WordMarkedAsVerb(verb_word)) jump NotConversation;
 		best_etype = TOTALK_PE; jump GiveError;
 	}
 
@@ -967,7 +970,7 @@ Get the verb: try all the syntax lines for that verb.
 
 =
 	.NotConversation;
-	if (verb_word == 0 || ((verb_word->#dict_par1) & 1) == 0) {
+	if (WordMarkedAsVerb(verb_word) == false) {
 		verb_word = UnknownVerb(verb_word);
 		if (verb_word ~= 0) jump VerbAccepted;
 		best_etype = VERB_PE;
@@ -976,13 +979,11 @@ Get the verb: try all the syntax lines for that verb.
 	.VerbAccepted;
 
     ! We now definitely have a verb, not a direction, whether we got here by the
-    ! "take ..." or "person, take ..." method.  Get the meta flag for this verb:
-
-    meta = ((verb_word->#dict_par1) & 2)/2;
+    ! "take ..." or "person, take ..." method.
 
     ! You can't order other people to "full score" for you, and so on...
 
-    if (meta == 1 && actor ~= player) {
+    if (WordMarkedAsMeta(verb_word) && actor ~= player) {
         best_etype = VERB_PE;
         meta = 0;
         jump GiveError;
@@ -1101,7 +1102,7 @@ and similarly for |multiinside|.
                         do {
                             l = NextWord();
                         } until ((wn > num_words) ||
-                                 (l && (l->#dict_par1) & 8 ~= 0));
+                                 (l && (l->#dict_par1) & DICTPAR1_PREP ~= 0));
 
                         if (wn > num_words) {
                             #Ifdef DEBUG;
@@ -1127,9 +1128,9 @@ and similarly for |multiinside|.
                                 do {
                                     l = NextWord();
                                 } until ((wn >= num_words) ||
-                                         (l && (l->#dict_par1) & 8 ~= 0));
+                                         (l && (l->#dict_par1) & DICTPAR1_PREP ~= 0));
 
-                                if (l && (l->#dict_par1) & 8) continue;
+                                if (l && (l->#dict_par1) & DICTPAR1_PREP) continue;
 
                                 ! lookahead failed
                                 #Ifdef DEBUG;
@@ -1596,7 +1597,7 @@ The return values are:
 (a) |GPR_REPARSE| for "I have rewritten the command, please re-parse from scratch";
 (b) |GPR_PREPOSITION| for "token accepted with no result";
 (c) $-256 + x$ for "please parse |ParseToken(ELEMENTARY_TT, x)| instead";
-(d) 0 for "token accepted, result is the multiple object list";
+(d) |GPR_MULTIPLE| for "token accepted, result is the multiple object list";
 (e) 1 for "token accepted, result is the number in |parsed_number|";
 (f) an object number for "token accepted with this object as result";
 (g) $-1$ for "token rejected".
@@ -2340,10 +2341,12 @@ because we want to allow duplicates).
 			if (context == MULTI_TOKEN or MULTIHELD_TOKEN or
 				MULTIEXCEPT_TOKEN or MULTIINSIDE_TOKEN or
 				NOUN_TOKEN or HELD_TOKEN or CREATURE_TOKEN) {
+				j = 0;
 				BeginActivity(DECIDING_WHETHER_ALL_INC_ACT, i);
 				if ((ForActivity(DECIDING_WHETHER_ALL_INC_ACT, i)) &&
-					(RulebookFailed())) rfalse;
+					(RulebookFailed())) j = 1;
 				EndActivity(DECIDING_WHETHER_ALL_INC_ACT, i);
+				if (j == 1) rfalse;
 			}
 		}
     }
@@ -2467,12 +2470,9 @@ because we want to allow duplicates).
     if (first_word == 0) {
         j = wn; first_word = LanguageIsVerb(buffer2, parse2, 1); wn = j;
     }
-    if (first_word ~= 0) {
-        j = first_word->#dict_par1;
-        if ((0 ~= j&1) && ~~LanguageVerbMayBeName(first_word)) {
-            VM_CopyBuffer(buffer, buffer2);
-            jump RECONSTRUCT_INPUT;
-        }
+    if ((WordMarkedAsVerb(first_word)) && ~~LanguageVerbMayBeName(first_word)) {
+        VM_CopyBuffer(buffer, buffer2);
+        jump RECONSTRUCT_INPUT;
     }
 
     ! Now we insert the answer into the original typed command, as
@@ -2513,8 +2513,7 @@ because we want to allow duplicates).
     wn = 1;
     LanguageToInformese();
     ! Re-tokenise:
-    VM_Tokenise(buffer,parse);
-	num_words = WordCount(); players_command = 100 + num_words;
+    TokeniseInput(buffer,parse);
     actors_location = ScopeCeiling(player);
 	FollowRulebook(Activity_after_rulebooks-->READING_A_COMMAND_ACT);
 
@@ -2552,12 +2551,9 @@ because we want to allow duplicates).
     ! Once again, if the reply looks like a command, give it to the
     ! parser to get on with and forget about the question...
 
-    if (first_word ~= 0) {
-        j = first_word->#dict_par1;
-        if ((0 ~= j&1) && ~~LanguageVerbMayBeName(first_word)) {
-            VM_CopyBuffer(buffer, buffer2);
-            jump RECONSTRUCT_INPUT;
-        }
+    if ((WordMarkedAsVerb(first_word)) && ~~LanguageVerbMayBeName(first_word)) {
+        VM_CopyBuffer(buffer, buffer2);
+    	jump RECONSTRUCT_INPUT;
     }
 
     ! ...but if we have a genuine answer, then:
@@ -3701,15 +3697,14 @@ if it was a match because of inadequate input).
 
 	if (nomatch && obj == 0) return 0;
 
-    dict_flags_of_noun = 0;
+    current_noun_is_plural = false;
 
 !  If input has run out then always match, with only quality 0 (this saves
 !  time).
 
     if (wn > num_words) {
     	if (nomatch) return 0;
-        if (indef_mode ~= 0)
-            dict_flags_of_noun = $$01110000;  ! Reject "plural" bit
+        if (indef_mode ~= 0) current_noun_is_plural = false;
         MakeMatch(obj,0);
         #Ifdef DEBUG;
         if (parser_trace >= 5) print "    Matched (0)^";
@@ -3728,10 +3723,9 @@ if it was a match because of inadequate input).
 
           .MMbyPN;
 
-            if (parser_action == ##PluralFound)
-                dict_flags_of_noun = dict_flags_of_noun | 4;
+            if (parser_action == ##PluralFound) current_noun_is_plural = true;
 
-            if (dict_flags_of_noun & 4) {
+            if (current_noun_is_plural) {
                 if (~~allow_plurals) k = 0;
                 else {
                     if (indef_mode == 0) {
@@ -3769,12 +3763,12 @@ if it was a match because of inadequate input).
     }
 
 	threshold = 1;
-	dict_flags_of_noun = (w->#dict_par1) & $$01110100;
+	current_noun_is_plural = WorkMarkedAsUntruncatedPlural(w);
 	w = NextWord();
 	while (Refers(obj, wn-1)) {
 		threshold++;
 		if (w)
-		   dict_flags_of_noun = dict_flags_of_noun | ((w->#dict_par1) & $$01110100);
+		   current_noun_is_plural = current_noun_is_plural | (WorkMarkedAsUntruncatedPlural(w));
 		w = NextWord();
 	}
 
@@ -3835,7 +3829,7 @@ if it is a pronoun,
     for (j=1 : j<=s : j=j+3)
         if (i == LanguagePronouns-->j)
             return j+2;
-    if ((i->#dict_par1)&128 == 0) rfalse;
+    if ((i->#dict_par1) & DICTPAR1_NOUN == 0) rfalse;
     return i;
 ];
 
@@ -3933,7 +3927,7 @@ Manual}, 4th edition.
 	for (i=0:i<n:i++) {
 		w = NextWordStopped();
 		if (w == 0 or THEN1__WD or COMMA_WORD or -1) break;
-		if ((w->#dict_par1) & $$00000100) {
+		if (WorkMarkedAsUntruncatedPlural(w)) {
 			parser_action = ##PluralFound;
 			outcome = true;
 		}
@@ -3962,23 +3956,25 @@ Manual}, 4th edition.
 
 [ ResetVagueWords obj; PronounNotice(obj); ];
 
-[ PronounNotice obj x bm g;
-    if (obj == player) return;
+[ PronounNotice obj g;
+    if ((obj ~= player) && (obj ofclass Object)) {
+		g = (GetGNAOfObject(obj));
+		if (obj has ambigpluralname) {
+			if ((g % 6) >= 3) g = g - 3;
+			PronounNoticeFromGNA(obj, g);   ! Singular form of the original GNA
+			PronounNoticeFromGNA(obj, g+3); ! Plural form of the original GNA
+		} else {
+			PronounNoticeFromGNA(obj, g);
+		}
+	}
+];
 
-	g = (GetGNAOfObject(obj));
-
+[ PronounNoticeFromGNA obj g
+	x bm;
     bm = PowersOfTwo_TB-->g;
     for (x=1 : x<=LanguagePronouns-->0 : x=x+3)
         if (bm & (LanguagePronouns-->(x+1)) ~= 0)
             LanguagePronouns-->(x+2) = obj;
-
-	if (((g % 6) < 3) && (obj has ambigpluralname)) {
-		g = g + 3;
-		bm = PowersOfTwo_TB-->g;
-		for (x=1 : x<=LanguagePronouns-->0 : x=x+3)
-			if (bm & (LanguagePronouns-->(x+1)) ~= 0)
-				LanguagePronouns-->(x+2) = obj;
-	}
 ];
 
 [ PronounNoticeHeldObjects x;
@@ -4010,6 +4006,85 @@ Manual}, 4th edition.
 ];
 
 [ YES_OR_NO_QUESTION_INTERNAL_R; ];
+
+@h Numerical Choices.
+This crude function prompts the player for a number from 1 to |max|, waits for
+this to be typed at the keyboard, then returns the choice made.
+
+=
+[ NumberChosenByPlayer max i j wa wl sign base digit_count n digit ch;
+	if (max <= 0) return 1;
+    for (::) {
+    	print ">";
+        if (location == nothing || parent(player) == nothing) KeyboardPrimitive(buffer2, parse2);
+        else KeyboardPrimitive(buffer2, parse2, DrawStatusLine);
+        #Iftrue CHARSIZE == 1;
+        j = parse2->1;
+		wa = buffer2 + parse2->5;
+		wl = parse2->4;
+        #Ifnot;
+        j = parse2-->0;
+ 		wa = buffer2 + WORDSIZE * parse2-->3;
+		wl = parse2-->2;
+        #Endif;
+        if (j) { ! at least one word entered
+            sign = 1; base = 10; digit_count = 0;
+			#Iftrue CHARSIZE == 1;
+			ch = wa->0;
+			#Ifnot;
+			ch = wa-->0;
+			#Endif; ! CHARSIZE
+			if (ch ~= '0' or '1' or '2' or '3' or '4' or '5' or '6' or '7' or '8' or '9')
+				jump Retry;
+			n = 0;
+			while (wl > 0) {
+				digit = ch - '0';
+				digit_count++;
+				switch (base) {
+					2:  if (digit_count == 17) jump Retry;
+					10:
+						#Iftrue WORDSIZE == 2;
+						if (digit_count == 6) jump Retry;
+						if (digit_count == 5) {
+							if (n > 3276) jump Retry;
+							if (n == 3276) {
+								if (sign == 1 && digit > 7) jump Retry;
+								if (sign == -1 && digit > 8) jump Retry;
+							}
+						}
+						#Ifnot; ! i.e., if (WORDSIZE == 4)
+						if (digit_count == 11) jump Retry;
+						if (digit_count == 10) {
+							if (n > 214748364) jump Retry;
+							if (n == 214748364) {
+								if (sign == 1 && digit > 7) jump Retry;
+								if (sign == -1 && digit > 8) jump Retry;
+							}
+						}
+						#Endif;
+					16: if (digit_count == 5) jump Retry;
+				}
+				if (digit >= 0 && digit < base) n = base*n + digit;
+				else jump Retry;
+				wl--;
+				#Iftrue CHARSIZE == 1;
+				wa++;
+				#Ifnot;
+				wa = wa + WORDSIZE;
+				#Endif; ! CHARSIZE
+			}
+			n = n*sign;
+			if ((n < 1) || (n > max)) jump Retry;
+			return n;
+        }
+		.Retry;
+		n = parsed_number; parsed_number = max;
+		PICK_A_NUMBER_INTERNAL_RM('A', max); print "^^";
+		parsed_number = n;
+    }
+];
+
+[ PICK_A_NUMBER_INTERNAL_R; ];
 
 @h Number Words.
 Not much of a parsing routine: we look through an array of pairs of number
@@ -4123,7 +4198,7 @@ Array alt_match_list --> (MATCH_LIST_WORDS+1);
 		while (wn <= num_words) {
 			l = NextWordStopped(); wn--;
 			if (l == THEN1__WD) break;
-			if ( (l ~= -1 or 0) && (l->#dict_par1) &8 ) { wn++; continue; }	! if preposition
+			if ((l ~= -1 or 0) && (l->#dict_par1) & DICTPAR1_PREP) { wn++; continue; }
 			if (l == ALL1__WD or ALL2__WD or ALL3__WD or ALL4__WD or ALL5__WD) { wn++; continue; }
 			SafeSkipDescriptors();
 			! save the current match state
@@ -4220,9 +4295,9 @@ recognises an existing value: it doesn't parse a new one.
 [ TEXT_TY_ROGPRI txt
 	pos len wa wl wpos wach bdm ch own;
 	bdm = true; own = wn;
-	len = BlkValueLBCapacity(txt);
+	len = PVFieldCapacity(txt);
 	for (pos=0: pos<=len: pos++) {
-		if (pos == len) ch = 0; else ch = BlkValueRead(txt, pos);
+		if (pos == len) ch = 0; else ch = PVField(txt, pos);
 		if (ch == 32 or 9 or 10 or 0) {
 			if (bdm) continue;
 			bdm = true;
@@ -4286,15 +4361,14 @@ the heap.
 	if (len > INPUT_BUFFER_LEN-2) len = INPUT_BUFFER_LEN-2;
 	#Iftrue CHARSIZE == 1;
 	buffer->1 = len; at = 2;
-	for (i=0:i<len:i++) buffer->(i+at) = CharToCase(BlkValueRead(from_txt, i), 0);
+	for (i=0:i<len:i++) buffer->(i+at) = CharToCase(PVField(from_txt, i), 0);
 	for (:at+i<INPUT_BUFFER_LEN:i++) buffer->(at+i) = ' ';
 	#ifnot;
 	buffer-->0 = len; at = 1;
-	for (i=0:i<len:i++) buffer-->(i+at) = CharToCase(BlkValueRead(from_txt, i), 0);
+	for (i=0:i<len:i++) buffer-->(i+at) = CharToCase(PVField(from_txt, i), 0);
 	for (:at+i<INPUT_BUFFER_LEN:i++) buffer-->(at+i) = ' ';
 	#endif;
-	VM_Tokenise(buffer, parse);
-	players_command = 100 + WordCount(); ! The snippet variable "player's command"
+	TokeniseInput(buffer, parse);
 	TEXT_TY_Untransmute(from_txt, p, cp);
 ];
 
@@ -4307,7 +4381,7 @@ the list. The following converts it to a list structure.
 
 =
 [ LIST_OF_TY_Mol list len i;
-	if ((list==0) || (BlkValueWeakKind(list) ~= LIST_OF_TY)) return 0;
+	if (WeakKindOfPV(list) ~= LIST_OF_TY) return 0;
 	len = multiple_object-->0;
 	LIST_OF_TY_SetLength(list, len);
 	for (i=1: i<=len: i++)
@@ -4316,11 +4390,11 @@ the list. The following converts it to a list structure.
 ];
 
 [ LIST_OF_TY_Set_Mol list len i;
-	if ((list==0) || (BlkValueWeakKind(list) ~= LIST_OF_TY)) return 0;
-	len = BlkValueRead(list, LIST_LENGTH_F);
+	if (WeakKindOfPV(list) ~= LIST_OF_TY) return 0;
+	len = PVField(list, LIST_LENGTH_F);
 	if (len > 63) len = 63;
 	multiple_object-->0 = len;
 	for (i=1: i<=len: i++)
-		multiple_object-->i = BlkValueRead(list, LIST_ITEM_BASE+i-1);
+		multiple_object-->i = PVField(list, LIST_ITEM_BASE+i-1);
 ];
 

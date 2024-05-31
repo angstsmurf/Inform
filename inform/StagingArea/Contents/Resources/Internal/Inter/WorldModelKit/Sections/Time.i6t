@@ -6,9 +6,7 @@ Support for parsing and printing times of day.
 
 =
 [ NUMBER_TY_to_TIME_TY n;
-	n = n%1440;
-	if (n < 0) return n + 1440;
-	return n;
+	return CongruenceClass(n, 1440);
 ];
 
 @h Digital Printing.
@@ -21,6 +19,15 @@ For instance, "2:06 am".
 	h = t/ONE_HOUR; if (h==0) h=12;
 	print h, ":";
 	if (t%ONE_HOUR < 10) print "0"; print t%ONE_HOUR, " ", (string) aop;
+];
+
+[ PrintDuration t h m;
+	if (t<0) { print "minus "; t = -t; }
+	h = t/ONE_HOUR; m = t%ONE_HOUR;
+	if (h > 0) print h, " hour"; if (h > 1) print "s";
+	if (h > 0) print " ";
+	if (m == 1) print "1 minute";
+	else if ((h == 0) || (m > 0)) print m, " minutes";
 ];
 
 @h Analogue Printing.

@@ -43,22 +43,28 @@
 #pragma mark - Methods
 
 - (NSURL*) copyWithUnzip: (NSURL *) sourceURL
-    toProjectTemporary: (IFProject *) project {
+      toProjectTemporary: (IFProject *) project
+           extensionName: (NSString *) name {
     NSURL* destinationURL = [[[project.materialsDirectoryURL URLByAppendingPathComponent: @"Extensions"]
                              URLByAppendingPathComponent: @"Reserved"]
                              URLByAppendingPathComponent: @"Temporary" isDirectory: true];
-    return [self copyWithUnzip:sourceURL to:destinationURL];
+    return [self copyWithUnzip: sourceURL
+                            to: destinationURL
+                 extensionName: name];
 }
 
 
+// Returns a URL of the downloaded file (or the .i7xd directory inside an unzipped zip file)
 - (NSURL*) copyWithUnzip: (NSURL *) sourceURL
-                      to: (NSURL *) destinationURL {
+                      to: (NSURL *) destinationURL
+           extensionName: (NSString *) name {
     NSError *error;
 
     if ([sourceURL.pathExtension.lowercaseString isEqualToString: @"zip"]) {
         if ([IFUtility unzip: sourceURL
                  toDirectory: destinationURL]) {
-            return destinationURL;
+            name = [[name stringByDeletingPathExtension] stringByAppendingPathExtension: @"i7xd"];
+            return [destinationURL URLByAppendingPathComponent: name];
         }
         return nil;
     }
@@ -71,7 +77,7 @@
  withIntermediateDirectories: YES
                   attributes: nil
                        error: &error];
-    destinationURL = [destinationURL URLByAppendingPathComponent: sourceURL.lastPathComponent];
+    destinationURL = [destinationURL URLByAppendingPathComponent: name];
     if (![fm copyItemAtURL: sourceURL
                      toURL: destinationURL
                      error: &error] ) {

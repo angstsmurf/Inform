@@ -59,7 +59,8 @@
 	--button-text-background-colour: #ffffff;
 	
 	--syntaxdefinition-colour: #000040;
-	--syntaxfunction-colour: #000040;
+	--syntaxheading-colour: #7f0000;
+	--syntaxfunction-colour: #5f0000;
 	--syntaxreserved-colour: #000040;
 	--syntaxelement-colour: #000040;
 	--syntaxidentifier-colour: #000040;
@@ -76,9 +77,11 @@
 
     --md-background-colour: #e3e6ea;
     --md-transcript-background-colour: #f9e9e9;
+    --md-code-background-colour: #e9e9f9;
     --md-dashed-border-colour: #2f6fab;
     --md-extract-inform7-box-colour: #FFFDE0;
     --md-extract-problem-box-colour: #e9f9e9;
+    --md-extract-code-box-colour: #e9f9e9;
     --md-shaded-box-colour: #e9e9e9;
     --md-transcript-deletion-colour: #ff0000;
     --md-transcript-insertion-colour: #00ff00;
@@ -177,7 +180,8 @@
 	--button-text-background-colour: #ffffff;
  	
 	--syntaxdefinition-colour: #e0e0ff;
-	--syntaxfunction-colour: #e0e0ff;
+	--syntaxheading-colour: #7f0000;
+	--syntaxfunction-colour: #ffe0e0;
 	--syntaxreserved-colour: #e0e0ff;
 	--syntaxelement-colour: #e0e0ff;
 	--syntaxidentifier-colour: #e0e0ff;
@@ -194,9 +198,11 @@
 
     --md-background-colour: #090b0d;
     --md-transcript-background-colour: #091919;
+    --md-code-background-colour: #191909;
     --md-dashed-border-colour: #CfAf32;
     --md-extract-inform7-box-colour: #123456;
     --md-extract-problem-box-colour: #1f111f;
+    --md-extract-code-box-colour: #1f111f;
     --md-shaded-box-colour: #111111;
     --md-transcript-deletion-colour: #ffdddd;
     --md-transcript-insertion-colour: #ddffdd;
@@ -747,7 +753,7 @@ button.dangerousbutton {
 .markdowncontent code.inlinecode {
 	font-size: 90%;
 	font-family: var(--informcode-fontfamily);
-	background-color: var(--md-background-colour);
+	background-color: var(--md-code-background-colour);
 	border-bottom-left-radius: 6px;
 	border-bottom-right-radius: 6px;
 	border-top-left-radius: 6px;
@@ -763,9 +769,22 @@ button.dangerousbutton {
 
 .markdowncontent div.extract-transcript {
 	margin: 0.75em;
+	margin-inline-start: 40px;
+	margin-inline-end: 40px;
 	padding: 0.75em;
 	border: 1px dotted var(--md-dashed-border-colour);
 	background-color: var(--md-transcript-background-colour);
+}
+
+.markdowncontent div.extract-transcript pre {
+	white-space: pre-wrap;
+}
+
+.markdowncontent div.extract-code {
+	margin: 0.75em;
+	padding: 0.75em;
+	border: 1px dotted var(--md-dashed-border-colour);
+	background-color: var(--md-code-background-colour);
 }
 
 .markdowncontent div.extract-problems {
@@ -816,7 +835,8 @@ button.dangerousbutton {
 /* Used in syntax-colouring for extension documentation */
 
 span.syntaxdefinition { color: var(--syntaxdefinition-colour); }
-span.syntaxfunction { color: var(--syntaxfunction-colour); }
+span.syntaxheading { color: var(--syntaxheading-colour); text-decoration: underline; }
+span.syntaxfunction { color: var(--syntaxfunction-colour); font-style: italic; }
 span.syntaxplain { color: var(--syntaxplain-colour); }
 span.syntaxelement { color: var(--syntaxelement-colour); }
 span.syntaxidentifier { color: var(--syntaxidentifier-colour); }

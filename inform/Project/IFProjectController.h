@@ -157,5 +157,6 @@
 -(void) testExtension: (NSString*) extension
               command: (NSString*) command
              testcase: (NSString*) testcase;
+-(void) installExtensionURL: (NSURL*) extension;
 
 @end

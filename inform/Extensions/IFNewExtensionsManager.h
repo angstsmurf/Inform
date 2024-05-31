@@ -24,7 +24,7 @@
 // Setting up
 - (instancetype) init NS_DESIGNATED_INITIALIZER;
 
-- (NSURL*) copyWithUnzip: (NSURL *) sourceURL toProjectTemporary: (IFProject *) project;
-- (NSURL*) copyWithUnzip: (NSURL *) sourceURL to: (NSURL *) destinationURL;
+- (NSURL*) copyWithUnzip: (NSURL *) sourceURL toProjectTemporary: (IFProject *) project extensionName: (NSString*) name;
+- (NSURL*) copyWithUnzip: (NSURL *) sourceURL to: (NSURL *) destinationURL extensionName: (NSString*) name;
 
 @end

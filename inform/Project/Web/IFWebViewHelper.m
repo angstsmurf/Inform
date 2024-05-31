@@ -61,6 +61,8 @@
                    forURLScheme: @"source"];
     [config setURLSchemeHandler: self
                    forURLScheme: @"skein"];
+    [config setURLSchemeHandler: self
+                   forURLScheme: @"library"];
 
     // We recieve messages from Javascript
     [config.userContentController addScriptMessageHandler: self
@@ -86,7 +88,8 @@
     //      window.webkit.messageHandlers.scriptHandler.postMessage(["functionName", "param1", "param2"]):
 
     // Create the view itself
-    WKWebView* wView = [[WKWebView alloc] initWithFrame:frame configuration: config];
+    WKWebView* wView = [[WKWebView alloc] initWithFrame: frame
+                                          configuration: config];
     wView.autoresizingMask = (NSUInteger) (NSViewWidthSizable|NSViewHeightSizable);
 
     // Set delegates
@@ -114,47 +117,20 @@
 -(NSURL*) urlFromLibraryURL: (NSURL*) url
                    frameURL: (NSURL*) frameURL {
     // Replace the "library:" prefix of the URL string with the URL for the enclosing document
-    // frame URL looks like: "inform:/fake/index.html"
-    // Our URL looks like "library:/payloads/Emily%20Short/Transit%20System.i7x"
-    // We transform this into "inform:/fake/payloads/Emily%20Short/Transit%20System.i7x"
+    // ie. Transform:
+    // Link URL: library:/resources/Extensions/Emily%20Short/Complex%20Listing-v10.zip?id=0
+    // FrameURL: https://ganelson.github.io/inform-public-library/v11/
+    // Combine into proper URL: https://ganelson.github.io/inform-public-library/v11/resources/Extensions/Emily%20Short/Complex%20Listing-v10.zip?id=0
 
-    if (( frameURL.path != nil ) && ( url.path != nil )) {
-        // Remove last object from path, and add in the other path
-        NSArray* framePathComponents = [frameURL.path componentsSeparatedByString:@"/"];
-        NSArray* urlPathComponents   = [url.path componentsSeparatedByString:@"/"];
+    if (( frameURL != nil ) && ( url.resourceSpecifier != nil )) {
+        // Remove leading scheme, i.e. 'library:'
+        NSString * relativeString = url.resourceSpecifier;
 
-        NSMutableArray* newPath = [[NSMutableArray alloc] initWithArray: framePathComponents ];
-        if( newPath.count > 0 ) {
-            [newPath removeObjectAtIndex:0];    // remove first '/' component
+        // Remove any leading forward slashes
+        while ((relativeString != nil) && (relativeString.length > 0) && ([relativeString characterAtIndex: 0] == '/')) {
+            relativeString = [relativeString substringFromIndex: 1];
         }
-        if( newPath.count > 0 ) {
-            [newPath removeLastObject];         // remove final path comonent "index.html"
-        }
-
-        NSMutableArray* urlPath = [[NSMutableArray alloc] initWithArray: urlPathComponents ];
-        if( urlPath.count > 0 ) {
-            [urlPath removeObjectAtIndex:0];    // remove first '/' component
-        }
-
-        [newPath addObjectsFromArray: urlPath];
-
-        // Escape encode the paths, as they were (unhelpfully) unescaped with the .path method
-        for(NSInteger index = 0; index < newPath.count; index++) {
-            NSString* escapedString = [newPath[index] stringByAddingPercentEncodingWithAllowedCharacters: escapeCharset];
-            newPath[index] = escapedString;
-        }
-
-        // Create the new URL string
-        NSMutableString* newUrlString = [[NSMutableString alloc] initWithFormat: @"%@:/", frameURL.scheme];
-        if( frameURL.host != nil ) {
-            [newUrlString appendString: @"/"];
-            [newUrlString appendString: frameURL.host];
-            [newUrlString appendString: @"/"];
-        }
-        [newUrlString appendString: [newPath componentsJoinedByString:@"/"]];
-
-        NSURL* newURL = [[NSURL alloc] initWithString: newUrlString];
-        return newURL;
+        return [NSURL URLWithString:relativeString relativeToURL:frameURL].absoluteURL;
     }
     return nil;
 }
@@ -257,7 +233,13 @@
         IFExtensionsManager* mgr = [IFExtensionsManager sharedNaturalInformExtensionsManager];
         if( mgr ) {
             NSURL* url = webView.URL;
-            NSURL* frameURL = webView.webFrame.dataSource.request.URL;
+            NSURL* frameURL = [IFUtility publicLibraryURL];
+            //
+            // Transform:
+            // FrameURL: https://ganelson.github.io/inform-public-library/v11/
+            // Link URL: library:/resources/Extensions/Emily%20Short/Complex%20Listing-v10.zip?id=0
+            // Combine into proper URL: https://ganelson.github.io/inform-public-library/v11/resources/Extensions/Emily%20Short/Complex%20Listing-v10.zip?id=0
+            //
             NSURL* newURL = [self urlFromLibraryURL: url
                                            frameURL: frameURL];
 
@@ -268,7 +250,6 @@
                                                     outerGlue: @"&"];
                 NSString* javascriptId = queryDict[@"id"];
 
-                // Remove last object from path, and add in the other path
                 [mgr downloadAndInstallExtension: newURL
                                           window: webView.window
                                   notifyDelegate: projectController
@@ -469,8 +450,7 @@
                                  @"openFile": @1,
                                  @"openURL": @1,
                                  @"askInterfaceForLocalVersionAuthor": @3,
-                                 @"askInterfaceForLocalVersionTextAuthor": @2,
-                                 @"downloadMultipleExtensions": @1
+                                 @"askInterfaceForLocalVersionTextAuthor": @2
                                };
     if (list.count == 0) {
         return;
@@ -511,8 +491,6 @@
         [self askInterfaceForLocalVersionTextAuthor: list[1]
                                               title: list[2]
                                     compilerVersion: settings.compilerVersion];
-    } else if ([@"downloadMultipleExtensions" isEqualToString: list[0]]) {
-        [self downloadMultipleExtensions: list[1]];
     }
 }
 
@@ -652,24 +630,6 @@
 
     // Not found
     return @"";
-}
-
--(void) downloadMultipleExtensions:(NSArray*) array {
-    for(int index = 0; index < array.count; index += 3) {
-        NSString* item      = array[index];
-        NSString* urlString = array[index + 1];
-        //NSString* version   = [array objectAtIndex: index + 2];
-        //NSLog(@"item is %@ for url %@ version %@", item, urlString, version);
-
-        NSURL* frameURL = [IFUtility publicLibraryURL];
-        NSURL* realURL = [self urlFromLibraryURL: [NSURL URLWithString: urlString]
-                                        frameURL: frameURL];
-
-        [[IFExtensionsManager sharedNaturalInformExtensionsManager] downloadAndInstallExtension: realURL
-                                                                                         window: pane.controller.window
-                                                                                 notifyDelegate: pane.controller
-                                                                                   javascriptId: item];
-    }
 }
 
 #pragma mark - Preferences

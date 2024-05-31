@@ -155,7 +155,7 @@ i7word_t i7_read_sword(i7process_t *proc, i7word_t array_address, i7word_t array
 		i7_fatal_exit(proc);
 	}
 	return             (i7word_t) data[byte_position + 1]  +
-	            0x100*((i7word_t) data[byte_position + 0]);
+	            0x100U*((i7word_t) data[byte_position + 0]);
 }
 
 i7word_t i7_read_word(i7process_t *proc, i7word_t array_address, i7word_t array_index) {
@@ -166,9 +166,9 @@ i7word_t i7_read_word(i7process_t *proc, i7word_t array_address, i7word_t array_
 		i7_fatal_exit(proc);
 	}
 	return             (i7word_t) data[byte_position + 3]  +
-	            0x100*((i7word_t) data[byte_position + 2]) +
-		      0x10000*((i7word_t) data[byte_position + 1]) +
-		    0x1000000*((i7word_t) data[byte_position + 0]);
+	            0x100U*((i7word_t) data[byte_position + 2]) +
+		      0x10000U*((i7word_t) data[byte_position + 1]) +
+		    0x1000000U*((i7word_t) data[byte_position + 0]);
 }
 void i7_write_byte(i7process_t *proc, i7word_t address, i7byte_t new_val) {
 	proc->state.memory[address] = new_val;
@@ -1773,10 +1773,7 @@ i7word_t i7_fn_TEXT_TY_CharacterLength(i7process_t *proc, i7word_t i7_mgl_local_
 	i7word_t i7_mgl_local_ch, i7word_t i7_mgl_local_i, i7word_t i7_mgl_local_dsize,
 	i7word_t i7_mgl_local_p, i7word_t i7_mgl_local_cp, i7word_t i7_mgl_local_r);
 i7word_t i7_fn_BlkValueRead(i7process_t *proc, i7word_t i7_mgl_local_from,
-	i7word_t i7_mgl_local_pos, i7word_t i7_mgl_local_do_not_indirect,
-	i7word_t i7_mgl_local_long_block, i7word_t i7_mgl_local_chunk_size_in_bytes,
-	i7word_t i7_mgl_local_header_size_in_bytes, i7word_t i7_mgl_local_flags,
-	i7word_t i7_mgl_local_entry_size_in_bytes, i7word_t i7_mgl_local_seek_byte_position);
+	i7word_t i7_mgl_local_pos, i7word_t i7_mgl_local_do_not_indirect);
 void i7_default_stylist(i7process_t *proc, i7word_t which, i7word_t what) {
 	i7_mg_stream_t *S =
 		&(proc->miniglk->memory_streams[proc->state.current_output_stream_ID]);
@@ -1795,7 +1792,7 @@ void i7_default_stylist(i7process_t *proc, i7word_t which, i7word_t what) {
 					i7_fn_TEXT_TY_CharacterLength(proc, what, 0, 0, 0, 0, 0, 0);
 				if (L > 127) L = 127;
 				for (int i=0; i<L; i++) S->style[i] =
-					i7_fn_BlkValueRead(proc, what, i, 0, 0, 0, 0, 0, 0, 0);
+					i7_fn_BlkValueRead(proc, what, i, 0);
 				S->style[L] = 0;
 				#endif
 			}
@@ -1827,16 +1824,10 @@ void i7_write_variable(i7process_t *proc, i7word_t var_id, i7word_t val) {
 }
 i7word_t i7_fn_TEXT_TY_Transmute(i7process_t *proc, i7word_t i7_mgl_local_txt);
 i7word_t i7_fn_BlkValueRead(i7process_t *proc, i7word_t i7_mgl_local_from,
-	i7word_t i7_mgl_local_pos, i7word_t i7_mgl_local_do_not_indirect,
-	i7word_t i7_mgl_local_long_block, i7word_t i7_mgl_local_chunk_size_in_bytes,
-	i7word_t i7_mgl_local_header_size_in_bytes, i7word_t i7_mgl_local_flags,
-	i7word_t i7_mgl_local_entry_size_in_bytes, i7word_t i7_mgl_local_seek_byte_position);
+	i7word_t i7_mgl_local_pos, i7word_t i7_mgl_local_do_not_indirect);
 i7word_t i7_fn_BlkValueWrite(i7process_t *proc, i7word_t i7_mgl_local_to,
 	i7word_t i7_mgl_local_pos, i7word_t i7_mgl_local_val,
-	i7word_t i7_mgl_local_do_not_indirect, i7word_t i7_mgl_local_long_block,
-	i7word_t i7_mgl_local_chunk_size_in_bytes, i7word_t i7_mgl_local_header_size_in_bytes,
-	i7word_t i7_mgl_local_flags, i7word_t i7_mgl_local_entry_size_in_bytes,
-	i7word_t i7_mgl_local_seek_byte_position);
+	i7word_t i7_mgl_local_do_not_indirect);
 i7word_t i7_fn_TEXT_TY_CharacterLength(i7process_t *proc,
 	i7word_t i7_mgl_local_txt, i7word_t i7_mgl_local_ch, i7word_t i7_mgl_local_i,
 	i7word_t i7_mgl_local_dsize, i7word_t i7_mgl_local_p, i7word_t i7_mgl_local_cp,
@@ -1851,7 +1842,7 @@ char *i7_read_string(i7process_t *proc, i7word_t S) {
 		fprintf(stderr, "Out of memory\n"); i7_fatal_exit(proc);
 	}
 	for (int i=0; i<L; i++)
-		A[i] = i7_fn_BlkValueRead(proc, S, i, 0, 0, 0, 0, 0, 0, 0);
+		A[i] = i7_fn_BlkValueRead(proc, S, i, 0);
 	A[L] = 0;
 	return A;
 	#endif
@@ -1863,11 +1854,11 @@ char *i7_read_string(i7process_t *proc, i7word_t S) {
 void i7_write_string(i7process_t *proc, i7word_t S, char *A) {
 	#ifdef i7_mgl_BASICINFORMKIT
 	i7_fn_TEXT_TY_Transmute(proc, S);
-	i7_fn_BlkValueWrite(proc, S, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	i7_fn_BlkValueWrite(proc, S, 0, 0, 0);
 	if (A) {
 		int L = strlen(A);
 		for (int i=0; i<L; i++)
-			i7_fn_BlkValueWrite(proc, S, i, A[i], 0, 0, 0, 0, 0, 0, 0);
+			i7_fn_BlkValueWrite(proc, S, i, A[i], 0);
 	}
 	#endif
 }

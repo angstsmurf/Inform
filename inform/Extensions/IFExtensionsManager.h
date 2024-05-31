@@ -153,6 +153,7 @@ typedef NS_ENUM(int, IFExtensionDownloadState) {
                       notifyDelegate: (NSObject*) notifyDelegate
                         javascriptId: (NSString*) javascriptId;
 - (void) downloadAndInstallFinished: (IFExtensionDownload*) download;
+-(void) reportDownloadResults: (IFExtensionDownload*) download;
 
 #pragma mark -
 -(void) unit_test;

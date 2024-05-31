@@ -197,14 +197,17 @@
     // ... except on initial load
     // ... except when clicking the forward or back arrows
     // ... except when going to the error page
+    // ... except when downloading from the public library (scheme "library")
 
     // Each time we get here will remove one of these exceptions if present.
 
     if (self.pageIsVisible) {
         if (inhibitAddToHistory <= 0) {
-            LogHistory(@"HISTORY: Extensions Page: (didStartProvisionalLoadForFrame) URL %@", [webView.URL absoluteString]);
-            [self.history switchToPage];
-            [(IFExtensionsPage*)self.history openHistoricalURL: webView.URL];
+            if (![webView.URL.scheme  isEqual: @"library"]) {
+                LogHistory(@"HISTORY: Extensions Page: (didStartProvisionalLoadForFrame) URL %@", [webView.URL absoluteString]);
+                [self.history switchToPage];
+                [(IFExtensionsPage*)self.history openHistoricalURL: webView.URL];
+            }
         }
     }
 
@@ -227,6 +230,7 @@
     } else {
         urlString = (error.userInfo)[NSURLErrorFailingURLStringErrorKey];
     }
+    NSLog(@"didFail for webview %@, wView:%@, url:%@", webView, wView, urlString);
 
     if (error.code == NSURLErrorCancelled) {
         //NSLog(@"IFExtensionsPage: load of URL %@ was cancelled", urlString);
@@ -270,7 +274,7 @@
 - (void) didSwitchToPage {
     NSURL* url = wView.URL;
 
-    LogHistory(@"HISTORY: Extensions Page: (didSwitchToPage) URL %@", urlString);
+    LogHistory(@"HISTORY: Extensions Page: (didSwitchToPage) URL %@", url);
 	[self.history openHistoricalURL: url];
     [wView reload: self];
 }

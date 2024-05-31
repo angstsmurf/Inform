@@ -8,6 +8,7 @@
 //
 
 #import "IFExtensionsManager.h"
+#import "IFNewExtensionsManager.h"
 #import "IFMaintenanceTask.h"
 #import "IFUtility.h"
 #import "IFAppDelegate.h"
@@ -192,6 +193,9 @@ static int maxErrorMessagesToDisplay = 3;
     self.state          = IFExtensionDownloadInProgress;
     self.expectedLength = NSURLResponseUnknownLength;
 
+    // Start the task
+    [self.connection resume];
+
     return YES;
 }
 
@@ -246,87 +250,90 @@ didReceiveResponse: (NSURLResponse *)response
     }
 }
 
+// *******************************************************************************************
+- (void) downloadedTask: (NSURLSessionTask*) task error: (NSError*) error {
+    IFExtensionsManager* mgr = [IFExtensionsManager sharedNaturalInformExtensionsManager];
+
+    if (error) {
+        //NSString* file = [[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey];
+
+        // Log message
+        NSString* message = [NSString stringWithFormat:[IFUtility localizedString: @"Failed to Download Extension Explanation - %@"],
+                             error.localizedDescription];
+
+        [mgr addError: message];
+
+        self.state        = IFExtensionDownloadFailed;
+        self.connection   = nil;
+        self.receivedData = nil;
+
+        [mgr downloadAndInstallFinished: self];
+        return;
+    }
+
+    // Get temporary filename
+    char tempFilename[256];
+    snprintf(tempFilename, 255, "%stemp.XXXXXX.zip", [NSTemporaryDirectory() fileSystemRepresentation]);
+    int result = mkstemps(tempFilename,4);
+    if( result != -1 ) {
+        NSString* filename = [[NSFileManager defaultManager] stringWithFileSystemRepresentation: tempFilename
+                                                                                         length: strlen(tempFilename)];
+        // Save the data to a temporary file
+        if( [self.receivedData writeToFile: filename
+                                atomically: YES] ) {
+            // Install this extension
+            NSURL *url = [NSURL fileURLWithPath: filename isDirectory: NO];
+            IFAppDelegate* appDelegate = (IFAppDelegate*)NSApp.delegate;
+            IFProjectController * projectController = appDelegate.frontmostProjectController;
+            if (projectController) {
+                IFProject * project = projectController.document;
+                NSString *name = [task.originalRequest.URL lastPathComponent];
+                NSURL *extensionURL = [[IFNewExtensionsManager sharedNewExtensionsManager] copyWithUnzip: url
+                                                                                      toProjectTemporary: project
+                                                                                           extensionName: name];
+                if (extensionURL) {
+                    // Call inbuild to check it's a valid extension and install
+                    [projectController installExtensionURL: extensionURL];
+                    self.state = IFExtensionDownloadAndInstallSucceeded;
+                }
+            }
+
+            // Remove temporary file
+            NSError* ourError;
+            [[NSFileManager defaultManager] removeItemAtPath: filename
+                                                       error: &ourError];
+
+            self.state = IFExtensionDownloadAndInstallSucceeded;
+        }
+        else {
+            self.state = IFExtensionInstallFailed;
+            // Log error
+            NSString* message = [NSString stringWithFormat: [IFUtility localizedString: @"Failed to Install Extension Explanation - Could not write to file '%@'"], filename];
+            [mgr addError: message];
+        }
+    }
+    else {
+        self.state = IFExtensionInstallFailed;
+        [mgr addError: [IFUtility localizedString: @"Failed to Install Extension Explanation - Could not make temporary filename"]];
+    }
+
+    self.connection     = nil;
+    self.receivedData   = nil;
+
+    [mgr downloadAndInstallFinished: self];
+}
+
+// *******************************************************************************************
 - (void)   URLSession: (NSURLSession *)session
                  task: (NSURLSessionTask *)task
  didCompleteWithError: (NSError *)error
 {
     if (task == self.connection)
     {
-        IFExtensionsManager* mgr = [IFExtensionsManager sharedNaturalInformExtensionsManager];
-        //NSLog(@"Download succeeded! Received %d bytes of data", [self.receivedData length]);
-        
-        if (error) {
-            //NSString* file = [[error userInfo] objectForKey:NSURLErrorFailingURLStringErrorKey];
-
-            // Log message
-            NSString* message = [NSString stringWithFormat:[IFUtility localizedString: @"Failed to Download Extension Explanation - %@"],
-                                 error.localizedDescription];
-            
-            [mgr addError: message];
-            
-            self.state        = IFExtensionDownloadFailed;
-            self.connection   = nil;
-            self.receivedData = nil;
-            
-            [mgr downloadAndInstallFinished: self];
-            return;
-        }
-        
-        // Get temporary filename
-        char tempFilename[256];
-        snprintf(tempFilename, 255, "%stemp.XXXXXX", [NSTemporaryDirectory() fileSystemRepresentation]);
-        int result = mkstemp(tempFilename);
-        if( result != -1 ) {
-            NSString* filename = [[NSFileManager defaultManager] stringWithFileSystemRepresentation: tempFilename length: strlen(tempFilename)];
-            
-            // Save the data to a temporary file
-            if( [self.receivedData writeToFile: filename
-                                    atomically: YES] ) {
-                // Install this extension
-                NSString* finalPath = nil;
-                NSString* title     = nil;
-                NSString* author    = nil;
-                NSString* version   = nil;
-                if ( [mgr installLegacyExtension: filename
-                                 finalPath: &finalPath
-                                     title: &title
-                                    author: &author
-                                   version: &version
-                        showWarningPrompts: NO
-                                    notify: NO] == IFExtensionSuccess) {
-                    self.title = title;
-                    self.author = author;
-                    self.version = version;
-                    self.state = IFExtensionDownloadAndInstallSucceeded;
-                }
-                else {
-                    self.state = IFExtensionInstallFailed;
-
-                    // Log error
-                    [mgr addError: [IFUtility localizedString: @"Failed to Install Extension Explanation"]];
-                }
-
-                // Remove temporary file
-                NSError* ourError;
-                [[NSFileManager defaultManager] removeItemAtPath: filename
-                                                           error: &ourError];
-            }
-            else {
-                self.state = IFExtensionInstallFailed;
-                // Log error
-                NSString* message = [NSString stringWithFormat: [IFUtility localizedString: @"Failed to Install Extension Explanation - Could not write to file '%@'"], filename];
-                [mgr addError: message];
-            }
-        }
-        else {
-            self.state = IFExtensionInstallFailed;
-            [mgr addError: [IFUtility localizedString: @"Failed to Install Extension Explanation - Could not make temporary filename"]];
-        }
-
-        self.connection     = nil;
-        self.receivedData   = nil;
-
-        [mgr downloadAndInstallFinished: self];
+        // Process the downloaded data on the main thread
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self downloadedTask: task error: error];
+        });
     }
 }
 
@@ -1245,9 +1252,9 @@ didReceiveResponse: (NSURLResponse *)response
                       notifyDelegate: (NSObject*) notifyDelegate
                         javascriptId: (NSString*) javascriptId {
     IFExtensionDownload* download = [[IFExtensionDownload alloc] initWithURL: url
-                                                                       window: aWindow
-                                                               notifyDelegate: notifyDelegate
-                                                                 javascriptId: javascriptId];
+                                                                      window: aWindow
+                                                              notifyDelegate: notifyDelegate
+                                                                javascriptId: javascriptId];
     if ( download ) {
         [downloads addObject: download];
         numberOfBatchedExtensions++;
@@ -1276,9 +1283,65 @@ didReceiveResponse: (NSURLResponse *)response
     return NO;
 }
 
-- (void) downloadAndInstallFinished: (IFExtensionDownload*) download {
-    [downloads removeObject: download];
+-(void) reportDownloadResults: (IFExtensionDownload*) download {
+    // Report errors or success - only if we are not cancelled
+    if( !dlProgress.isCancelled ) {
+        // Were there errors? Report them if so.
+        if( numberOfErrors > 0 ) {
+            if( numberOfErrors < numberOfBatchedExtensions ) {
+                NSString* messageKey;
 
+                if( (numberOfBatchedExtensions - numberOfErrors) == 1 ) {
+                    messageKey = [NSString stringWithFormat: [IFUtility localizedString: @"One extension installed successfully, %d failed"], numberOfErrors];
+                } else {
+                    messageKey = [NSString stringWithFormat: [IFUtility localizedString: @"%d extensions installed successfully, %d failed"], numberOfBatchedExtensions - numberOfErrors, numberOfErrors];
+                }
+                [IFUtility runAlertWindow: download.window
+                                localized: YES
+                                  warning: YES
+                                    title: messageKey
+                                  message: @"%@", errorString];
+            } else {
+                if (numberOfBatchedExtensions > 1 ) {
+                    [IFUtility runAlertWindow: download.window
+                                    localized: YES
+                                      warning: YES
+                                        title: [NSString stringWithFormat: [IFUtility localizedString: @"Failed to install %d extensions"], numberOfErrors]
+                                      message: @"%@", errorString];
+                } else {
+                    [IFUtility runAlertWindow: download.window
+                                    localized: YES
+                                      warning: YES
+                                        title: [IFUtility localizedString: @"Failed to install extension"]
+                                      message: @"%@", errorString];
+                }
+            }
+        }/* else {
+            // Show final message
+            if( numberOfBatchedExtensions > 1 ) {
+                [IFUtility runAlertInformationWindow: download.window
+                                               title: @"Installation complete"
+                                             message: @"%d extensions installed successfully", numberOfBatchedExtensions];
+            } else {
+                [IFUtility runAlertInformationWindow: download.window
+                                               title: @"Installation complete"
+                                             message: @"Extension \"%@\" by %@ (%@) installed successfully", download.title, download.author, download.safeVersion];
+            }
+        } */
+    }
+
+    // Remove progress indicator
+    if( [download.notifyDelegate isKindOfClass:[IFProjectController class]] ) {
+        [dlProgress stopProgress];
+        [(IFProjectController*) download.notifyDelegate removeProgressIndicator: dlProgress];
+    }
+
+    numberOfBatchedExtensions = 0;
+    numberOfErrors = 0;
+    [errorString setString:@""];
+}
+
+- (void) downloadAndInstallFinishedOnMainThread: (IFExtensionDownload*) download {
     int done  = numberOfBatchedExtensions - (int) downloads.count;
     int total = numberOfBatchedExtensions;
     CGFloat percentage = 100.0f * (CGFloat) done / (CGFloat) total;
@@ -1298,62 +1361,10 @@ didReceiveResponse: (NSURLResponse *)response
 
     // Last one finished downloading?
     if( downloads.count == 0 ) {
-
-        // Report errors or success - only if we are not cancelled
-        if( !dlProgress.isCancelled ) {
-            // Were there errors?
-            if( numberOfErrors > 0 ) {
-                if( numberOfErrors < numberOfBatchedExtensions ) {
-                    NSString* messageKey;
-
-                    if( (numberOfBatchedExtensions - numberOfErrors) == 1 ) {
-                        messageKey = [NSString stringWithFormat: [IFUtility localizedString: @"One extension installed successfully, %d failed"], numberOfErrors];
-                    } else {
-                        messageKey = [NSString stringWithFormat: [IFUtility localizedString: @"%d extensions installed successfully, %d failed"], numberOfBatchedExtensions - numberOfErrors, numberOfErrors];
-                    }
-                    [IFUtility runAlertWindow: download.window
-                                    localized: YES
-                                      warning: YES
-                                        title: messageKey
-                                      message: @"%@", errorString];
-                } else {
-                    if (numberOfBatchedExtensions > 1 ) {
-                        [IFUtility runAlertWindow: download.window
-                                        localized: YES
-                                          warning: YES
-                                            title: [NSString stringWithFormat: [IFUtility localizedString: @"Failed to install %d extensions"], numberOfErrors]
-                                          message: @"%@", errorString];
-                    } else {
-                        [IFUtility runAlertWindow: download.window
-                                        localized: YES
-                                          warning: YES
-                                            title: [IFUtility localizedString: @"Failed to install extension"]
-                                          message: @"%@", errorString];
-                    }
-                }
-            } else {
-                // Show final message
-                if( numberOfBatchedExtensions > 1 ) {
-                    [IFUtility runAlertInformationWindow: download.window
-                                                   title: @"Installation complete"
-                                                 message: @"%d extensions installed successfully", numberOfBatchedExtensions];
-                } else {
-                    [IFUtility runAlertInformationWindow: download.window
-                                                   title: @"Installation complete"
-                                                 message: @"Extension \"%@\" by %@ (%@) installed successfully", download.title, download.author, download.safeVersion];
-                }
-            }
-        }
-
-        // Remove progress indicator
-        if( [download.notifyDelegate isKindOfClass:[IFProjectController class]] ) {
-            [dlProgress stopProgress];
-            [(IFProjectController*) download.notifyDelegate removeProgressIndicator: dlProgress];
-        }
-
-        numberOfBatchedExtensions = 0;
-        numberOfErrors = 0;
-        [errorString setString:@""];
+        // Report results back on the main thread
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self reportDownloadResults: download];
+        });
     }
 
     // If this particular download succeeded, tell the IFProjectController so it can update the web page to indicate it's downloaded
@@ -1361,7 +1372,7 @@ didReceiveResponse: (NSURLResponse *)response
         [self dirtyCache];
         // TODO: For the moment at least, this is for old style extensions
         [self availableExtensionsWithCompilerVersion: @"6M62"];
-        
+
         if( download.notifyDelegate != nil ) {
             if( [download.notifyDelegate isKindOfClass:[IFProjectController class]] ) {
                 [(IFProjectController*)download.notifyDelegate extensionUpdated: download.javascriptId];
@@ -1369,6 +1380,14 @@ didReceiveResponse: (NSURLResponse *)response
         }
         self.cacheChanged = NO;
     }
+}
+
+- (void) downloadAndInstallFinished: (IFExtensionDownload*) download {
+    [downloads removeObject: download];
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self downloadAndInstallFinishedOnMainThread: download];
+    });
 
     if( downloads.count > 0 ) {
         [self performSelector: @selector(startDownloadAndInstallNextInQueue)

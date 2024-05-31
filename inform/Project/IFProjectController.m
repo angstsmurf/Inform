@@ -1689,10 +1689,12 @@ static CGFloat const      minDividerWidth     = 75.0f;
 
         NSURL *url = (*pPanel).URL;
         IFProject *project = self.document;
+        NSString* name = url.lastPathComponent;
         self->extensionURL = [[IFNewExtensionsManager sharedNewExtensionsManager] copyWithUnzip: url
-                                                                             toProjectTemporary: project];
+                                                                             toProjectTemporary: project
+                                                                                  extensionName: name];
         if (self->extensionURL) {
-            // Call inbuild to check it's a valid extension
+            // Call inbuild to check it's a valid extension and install
             [self installExtensionURL: self->extensionURL];
         }
     }];

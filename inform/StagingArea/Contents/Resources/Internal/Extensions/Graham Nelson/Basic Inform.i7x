@@ -21,6 +21,7 @@ The verb to be means the built-in new-figure meaning.
 The verb to be means the built-in new-sound meaning.
 The verb to be means the built-in new-file meaning.
 The verb to be means the built-in episode meaning.
+The verb to be means the built-in declares-licence meaning.
 The verb to be means the equality relation.
 
 The verb to imply means the built-in verb-means meaning.
@@ -99,26 +100,7 @@ Use index figure thumbnails of at least 50 translates as a compiler feature.
 
 Use dynamic memory allocation of at least 8192.
 
-Use Inform 6 compiler option "-s".
-Use Inform 6 compiler option "$ALLOC_CHUNK_SIZE=32000".
-Use Inform 6 compiler option "$MAX_ARRAYS=10000".
-Use Inform 6 compiler option "$MAX_CLASSES=200".
-Use Inform 6 compiler option "$MAX_VERBS=255".
-Use Inform 6 compiler option "$MAX_LABELS=10000".
-Use Inform 6 compiler option "$MAX_ZCODE_SIZE=1000000".
-Use Inform 6 compiler option "$MAX_STATIC_DATA=500000".
-Use Inform 6 compiler option "$MAX_NUM_STATIC_STRINGS=500000".
-Use Inform 6 compiler option "$MAX_PROP_TABLE_SIZE=200000".
-Use Inform 6 compiler option "$MAX_INDIV_PROP_TABLE_SIZE=20000".
 Use Inform 6 compiler option "$MAX_STACK_SIZE=65536".
-Use Inform 6 compiler option "$MAX_SYMBOLS=20000".
-Use Inform 6 compiler option "$MAX_EXPRESSION_NODES=256".
-Use Inform 6 compiler option "$MAX_LABELS=200000".
-Use Inform 6 compiler option "$MAX_LOCAL_VARIABLES=256".
-
-Chapter 1 - Glulx Preamble (for Glulx only)
-
-Use Inform 6 compiler option "$DICT_CHAR_SIZE=4".
 
 Part Two - Miscellaneous Definitions
 
@@ -234,43 +216,56 @@ To showme (val - value)
 	(documented at ph_showme):
 	(- {-show-me:val} -).
 
-To say (N - a number) in hexadecimal:
+To say (N - a number) in hexadecimal
+	(documented at phs_inbase):
 	(- PrintInBase({N}, 16); -).
 
-To say (N - a number) in decimal:
+To say (N - a number) in decimal
+	(documented at phs_inbase):
 	(- PrintInBase({N}, 10); -).
 
-To say (N - a number) in octal:
+To say (N - a number) in octal
+	(documented at phs_inbase):
 	(- PrintInBase({N}, 8); -).
 
-To say (N - a number) in binary:
+To say (N - a number) in binary
+	(documented at phs_inbase):
 	(- PrintInBase({N}, 2); -).
 
-To say (N - a number) in base (B - a number):
+To say (N - a number) in base (B - a number)
+	(documented at phs_inbase):
 	(- PrintInBase({N}, {B}); -).
 
-To say (N - a number) in (M - a number) digit/digits:
+To say (N - a number) in (M - a number) digit/digits
+	(documented at phs_indigits):
 	(- PrintInBase({N}, 10, {M}); -).
 
-To say (N - a number) in (M - a number) hexadecimal digit/digits:
+To say (N - a number) in (M - a number) hexadecimal digit/digits
+	(documented at phs_inbaseindigits):
 	(- PrintInBase({N}, 16, {M}); -).
 
-To say (N - a number) in (M - a number) decimal digit/digits:
+To say (N - a number) in (M - a number) decimal digit/digits
+	(documented at phs_inbaseindigits):
 	(- PrintInBase({N}, 10, {M}); -).
 
-To say (N - a number) in (M - a number) octal digit/digits:
+To say (N - a number) in (M - a number) octal digit/digits
+	(documented at phs_inbaseindigits):
 	(- PrintInBase({N}, 8, {M}); -).
 
-To say (N - a number) in (M - a number) binary digit/digits:
+To say (N - a number) in (M - a number) binary digit/digits
+	(documented at phs_inbaseindigits):
 	(- PrintInBase({N}, 2, {M}); -).
 
-To say (N - a number) in (M - a number) base (B - a number) digit/digits:
+To say (N - a number) in (M - a number) base (B - a number) digit/digits
+	(documented at phs_inbaseindigits):
 	(- PrintInBase({N}, {B}, {M}); -).
 
-To say (N - a number) in unsigned decimal:
+To say (N - a number) in unsigned decimal
+	(documented at phs_inunsigneddecimal):
 	(- PrintInBase({N}, 10, 1); -).
 
-To say (N - a number) in (M - a number) unsigned decimal digit/digits:
+To say (N - a number) in (M - a number) unsigned decimal digit/digits
+	(documented at phs_inunsigneddecimaldigits):
 	(- PrintInBase({N}, 10, {M}); -).
 
 Section 2 - Saying Names
@@ -379,7 +374,7 @@ To say one of -- beginning say_one_of (documented at phs_oneof): (-
 {-open-brace}
 		0: -).
 To say or -- continuing say_one_of (documented at phs_or):
-	(- @nop; {-segment-count}: -).
+	(- {-segment-count}: -).
 To say at random -- ending say_one_of with marker I7_SOO_RAN (documented at phs_random):
 	(- {-close-brace} -).
 To say purely at random -- ending say_one_of with marker I7_SOO_PAR (documented at phs_purelyrandom):
@@ -613,7 +608,7 @@ To decide which real number is the floor of (R - a real number)
 	(documented at ph_floor)
 	(this is the floor function):
 	(- REAL_NUMBER_TY_Floor({R}) -).
-To decide which number is (R - a real number) to the nearest whole number
+To decide which number is (R - a real number) to the/-- nearest whole number
 	(documented at ph_nearestwholenumber)
 	(this is the int function):
 	(- REAL_NUMBER_TY_to_NUMBER_TY({R}) -).
@@ -820,8 +815,11 @@ Section 1 - Enumerations
 To decide which number is number of (S - description of values)
 	(documented at ph_numberof):
 	(- {-primitive-definition:number-of} -).
-To decide what number is the numerical value of (X - enumerated value): (- {X} -).
-To decide what number is the sequence number of (X - enumerated value of kind K):
+To decide what number is the numerical value of (X - enumerated value)
+	(documented at ph_numericalvalue):
+	(- {X} -).
+To decide what number is the sequence number of (X - enumerated value of kind K)
+	(documented at ph_sequencenumber):
 	(- {-indexing-routine:K}({X}) -).
 To decide which K is (name of kind of enumerated value K) after (X - K)
 	(documented at ph_enumafter):
@@ -914,15 +912,15 @@ To decide what text is the substituted form of (T - text)
 
 Section 2 - Matching and Replacing
 
-To decide if (T - text) exactly matches the text (find - text),
+To decide if (T - text) exactly matches the/-- text (find - text),
 	case insensitively
 	(documented at ph_exactlymatches):
 	(- TEXT_TY_Replace_RE(CHR_BLOB,{-by-reference:T},{-by-reference:find},0,{phrase options},1) -).
-To decide if (T - text) matches the text (find - text),
+To decide if (T - text) matches the/-- text (find - text),
 	case insensitively
 	(documented at ph_matches):
 	(- TEXT_TY_Replace_RE(CHR_BLOB,{-by-reference:T},{-by-reference:find},0,{phrase options}) -).
-To decide what number is number of times (T - text) matches the text
+To decide what number is number of times (T - text) matches the/-- text
 	(find - text), case insensitively
 	(documented at ph_nummatches):
 	(- TEXT_TY_Replace_RE(CHR_BLOB,{-by-reference:T},{-by-reference:find},1,{phrase options}) -).
@@ -975,11 +973,11 @@ To decide what number is the length of text match
 
 Section 3 - Regular Expressions
 
-To decide if (T - text) exactly matches the regular expression (find - text),
+To decide if (T - text) exactly matches the/-- regular expression (find - text),
 	case insensitively
 	(documented at ph_exactlymatchesre):
 	(- TEXT_TY_Replace_RE(REGEXP_BLOB,{-by-reference:T},{-by-reference:find},0,{phrase options},1) -).
-To decide if (T - text) matches the regular expression (find - text),
+To decide if (T - text) matches the/-- regular expression (find - text),
 	case insensitively
 	(documented at ph_matchesre):
 	(- TEXT_TY_Replace_RE(REGEXP_BLOB,{-by-reference:T},{-by-reference:find},0,{phrase options}) -).
@@ -998,7 +996,7 @@ To decide what number is the last index of subexpression (n - a number)
 To decide what number is the length of subexpression (n - a number)
 	(documented at ph_relength):
 	(- (RE_Subexpressions-->{n}-->RE_DATA2 - RE_Subexpressions-->{n}-->RE_DATA1) -).
-To decide what number is number of times (T - text) matches the regular expression
+To decide what number is number of times (T - text) matches the/-- regular expression
 	(find - text),case insensitively
 	(documented at ph_nummatchesre):
 	(- TEXT_TY_Replace_RE(REGEXP_BLOB,{-by-reference:T},{-by-reference:find},1,{phrase options}) -).
@@ -1103,13 +1101,13 @@ To decide if there is no (TR - table-reference)
 To blank out (tr - table-reference)
 	(documented at ph_blankout):
 	(- {-by-reference-blank-out:tr}; -).
-To blank out the whole row
+To blank out the/-- whole row
 	(documented at ph_blankoutrow):
 	(- TableBlankOutRow({-my:ct_0}, {-my:ct_1}); -).
-To blank out the whole (TC - table column) in/from/of (T - table name)
+To blank out the/-- whole (TC - table column) in/from/of (T - table name)
 	(documented at ph_blankoutcol):
 	(- TableBlankOutColumn({T}, {TC}); -).
-To blank out the whole of (T - table name)
+To blank out the/-- whole of (T - table name)
 	(documented at ph_blankouttable):
 	(- TableBlankOutAll({T}); -).
 
@@ -1195,10 +1193,10 @@ To decide what number is the number of entries in/of/from (L - a list of values)
 To truncate (L - a list of values) to (N - a number) entries/entry
 	(documented at ph_truncate):
 	(- LIST_OF_TY_SetLength({-lvalue-by-reference:L}, {N}, -1, 1); -).
-To truncate (L - a list of values) to the first (N - a number) entries/entry
+To truncate (L - a list of values) to the/-- first (N - a number) entries/entry
 	(documented at ph_truncatefirst):
 	(- LIST_OF_TY_SetLength({-lvalue-by-reference:L}, {N}, -1, 1); -).
-To truncate (L - a list of values) to the last (N - a number) entries/entry
+To truncate (L - a list of values) to the/-- last (N - a number) entries/entry
 	(documented at ph_truncatelast):
 	(- LIST_OF_TY_SetLength({-lvalue-by-reference:L}, {N}, -1, -1); -).
 To extend (L - a list of values) to (N - a number) entries/entry
