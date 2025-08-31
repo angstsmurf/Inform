@@ -1349,8 +1349,16 @@ static inline BOOL IsLineEnd(unichar c) {
 	
 	NSString* text = [_textStorage string];
 	
-	// Move backwards to the beginning of the line
+	// Move backwards to the end of the previous line, avoiding getting stuck in a
+    // Windows line ending if we started on one
 	start--;
+    if (start > 0
+        && [text characterAtIndex:start] == '\r'
+        && [text characterAtIndex:start+1] == '\n') {
+        // CRLF detected!
+        start--;
+    }
+    // Okay, now any prior line endings are definitely the end of the previous line
 	while (start >= 0 && !IsLineEnd([text characterAtIndex: start])) {
 		start--;
 	}
@@ -1414,12 +1422,14 @@ static inline BOOL IsLineEnd(unichar c) {
 
 // Given a character index, work out the corresponding range where elastic tabs must apply
 - (NSRange) rangeOfElasticRegionAtIndex: (NSUInteger) charIndex {
+    NSString* text = [_textStorage string];
+
 	// Hunt backwards for the beginning of the file, or the first blank line that preceeds this index
 	NSRange firstLine	= [self lineRangeAtIndex: charIndex];
 	NSRange lastLine	= firstLine;
 
 	// Lines without tabs never use elastic tabs
-	if ([self isTabLess: firstLine]) return NSMakeRange(NSNotFound, NSNotFound);
+	if ([self isTabLess: firstLine]) return NSMakeRange(NSNotFound, 0);
 
     // Look backwards through the lines, looking for the first one without tabs
 	while (firstLine.location > 0) {
@@ -1452,7 +1462,7 @@ static inline BOOL IsLineEnd(unichar c) {
 	}
 
 	// By default, elastic tabs do not apply to a character range
-	return NSMakeRange(NSNotFound, NSNotFound);
+	return NSMakeRange(NSNotFound, 0);
 }
 
 // Given a character range, calculate the positions the 'elastic' tab stops should go at
