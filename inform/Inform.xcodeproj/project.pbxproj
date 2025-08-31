@@ -2793,7 +2793,8 @@
 				PRODUCT_NAME = InformQL;
 				SKIP_INSTALL = YES;
 				WARNING_CFLAGS = (
-					"-Weverything",
+					"-Wall",
+					"-Wextra",
 					"-Wno-direct-ivar-access",
 					"-Wno-unused-macros",
 					"-Wno-sign-compare",
@@ -2839,7 +2840,8 @@
 				PRODUCT_NAME = InformQL;
 				SKIP_INSTALL = YES;
 				WARNING_CFLAGS = (
-					"-Weverything",
+					"-Wall",
+					"-Wextra",
 					"-Wno-direct-ivar-access",
 					"-Wno-unused-macros",
 					"-Wno-sign-compare",
@@ -2893,7 +2895,8 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				WARNING_CFLAGS = (
-					"-Weverything",
+					"-Wall",
+					"-Wextra",
 					"-Wno-direct-ivar-access",
 					"-Wno-unused-macros",
 					"-Wno-sign-compare",
@@ -2947,7 +2950,8 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				WARNING_CFLAGS = (
-					"-Weverything",
+					"-Wall",
+					"-Wextra",
 					"-Wno-direct-ivar-access",
 					"-Wno-unused-macros",
 					"-Wno-sign-compare",
