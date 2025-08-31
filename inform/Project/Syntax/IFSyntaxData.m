@@ -1154,7 +1154,7 @@ static inline BOOL IsWhitespace(unichar c) {
 				previousElasticRange = elasticRange;
 
 				// Lay out the tabs properly
-				NSArray* newTabStops = [self elasticTabsInRegion: elasticRange];
+				NSArray<NSTextTab*>* newTabStops = [self elasticTabsInRegion: elasticRange];
 
 				// Update the tabs over this region if necessary
                 int firstElasticLine	= [self lineForIndex: elasticRange.location];
@@ -1167,7 +1167,9 @@ static inline BOOL IsWhitespace(unichar c) {
                     [lineStyles addObject: [self paragraphStyleForTabStops: 0]];
                 }
                 for (int formatLine = firstElasticLine; formatLine < lastElasticLine; formatLine++) {
+                    
                     // Check if this line needs an update
+                    // XXX(norberg): this still doesn't work and I don't understand why
                     if (!forceUpdateTabs) {
                         NSParagraphStyle* currentPara = lineStyles[formatLine][NSParagraphStyleAttributeName];
                         NSArray<NSTextTab*>* currentTabs = currentPara.tabStops;
@@ -1175,8 +1177,10 @@ static inline BOOL IsWhitespace(unichar c) {
                             BOOL tabsIdentical = YES;
                             NSUInteger lim = newTabStops.count;
                             for (NSUInteger i = 0; i < lim; ++i) {
-                                if (![newTabStops[i] isEqual:currentTabs[i]]) {
+                                if (newTabStops[i].location != currentTabs[i].location) {
                                     tabsIdentical = NO;
+                                    // All further lines also must be updated.
+                                    forceUpdateTabs = YES;
                                     break;
                                 }
                             }
