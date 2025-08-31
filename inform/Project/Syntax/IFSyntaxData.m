@@ -1420,8 +1420,6 @@ static inline BOOL IsLineEnd(unichar c) {
 
 // Given a character index, work out the corresponding range where elastic tabs must apply
 - (NSRange) rangeOfElasticRegionAtIndex: (NSUInteger) charIndex {
-    NSString* text = [_textStorage string];
-
 	// Hunt backwards for the beginning of the file, or the first blank line that preceeds this index
 	NSRange firstLine	= [self lineRangeAtIndex: charIndex];
 	NSRange lastLine	= firstLine;
