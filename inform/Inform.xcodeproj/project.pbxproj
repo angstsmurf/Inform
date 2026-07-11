@@ -47,7 +47,6 @@
 		55C916EB27518B6B003725D4 /* ProblemHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55C916EA27518B6B003725D4 /* ProblemHandlers.swift */; };
 		55D6F088275C50830098620E /* GlkSound.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 55BFAC0C2744983B0049646A /* GlkSound.framework */; };
 		55FF5AC7275A250A000B0D21 /* GlkSound.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 55BFAC0C2744983B0049646A /* GlkSound.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		55FF5B8B275ADBFD000B0D21 /* Ogg.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 55FF5B63275ADB78000B0D21 /* Ogg.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		55FF5B8D275ADBFD000B0D21 /* SFBAudioEngine.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 55FF5B8A275ADBBC000B0D21 /* SFBAudioEngine.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C32E842529DAD4F600DEA0DC /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C32E842429DAD4F600DEA0DC /* Colors.xcassets */; };
 		FF00CB7919085EB200B5D911 /* IFI7OutputSettings.m in Sources */ = {isa = PBXBuildFile; fileRef = FF00CB7719085EB200B5D911 /* IFI7OutputSettings.m */; };
@@ -485,19 +484,33 @@
 			remoteGlobalIDString = 4BF085290E166E8300DB5C6B;
 			remoteInfo = GlkSound;
 		};
-		55FF5B62275ADB78000B0D21 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 55FF5B4B275ADB78000B0D21 /* ogg.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 3D9548E267A3491B86A2CB0C;
-			remoteInfo = ogg;
-		};
 		55FF5B89275ADBBC000B0D21 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 55FF5B83275ADBBC000B0D21 /* SFBAudioEngine.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = 3210AB9017B9C05A00743639;
 			remoteInfo = SFBAudioEngine;
+		};
+		C3B134872E65083000FA4DA7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B28B8A70812A32600D39021 /* ZoomCocoa.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 5571D3062CC71256004709D1;
+			remoteInfo = PCXTester;
+		};
+		C3B134892E65083000FA4DA7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B28B8A70812A32600D39021 /* ZoomCocoa.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 5508EB992CCF057D00F6E090;
+			remoteInfo = "Magnetic Scrolls";
+		};
+		C3B1348B2E65083000FA4DA7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B28B8A70812A32600D39021 /* ZoomCocoa.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 5508EBA52CCF0A5E00F6E090;
+			remoteInfo = magnetic;
 		};
 		FF61DE6129F0362C0047E7D8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -587,7 +600,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				55FF5B8B275ADBFD000B0D21 /* Ogg.framework in Copy Frameworks */,
 				55FF5B8D275ADBFD000B0D21 /* SFBAudioEngine.framework in Copy Frameworks */,
 				55FF5AC7275A250A000B0D21 /* GlkSound.framework in Copy Frameworks */,
 				FFDBF73018F9BA18004F53DD /* GlkView.framework in Copy Frameworks */,
@@ -710,7 +722,6 @@
 		55BFABEF274481760049646A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		55BFABF62744983B0049646A /* CocoaGlk.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = CocoaGlk.xcodeproj; path = ../zoom/depends/CocoaGlk/CocoaGlk.xcodeproj; sourceTree = "<group>"; };
 		55C916EA27518B6B003725D4 /* ProblemHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemHandlers.swift; sourceTree = "<group>"; usesTabs = 1; };
-		55FF5B4B275ADB78000B0D21 /* ogg.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ogg.xcodeproj; path = ../zoom/depends/CocoaGlk/GlkSound/SFBAudioEngine/Libraries/ogg/ogg.xcodeproj; sourceTree = "<group>"; };
 		55FF5B83275ADBBC000B0D21 /* SFBAudioEngine.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SFBAudioEngine.xcodeproj; path = ../zoom/depends/CocoaGlk/GlkSound/SFBAudioEngine/SFBAudioEngine.xcodeproj; sourceTree = "<group>"; };
 		C32E842429DAD4F600DEA0DC /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
 		FF00CB7619085EB200B5D911 /* IFI7OutputSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IFI7OutputSettings.h; sourceTree = "<group>"; };
@@ -1079,7 +1090,6 @@
 				FF12D70218A9457A0016FA8E /* Inform-Info.plist */,
 				4BA379100CD3E39700C7B1D4 /* InformQL-Info.plist */,
 				55BFABF62744983B0049646A /* CocoaGlk.xcodeproj */,
-				55FF5B4B275ADB78000B0D21 /* ogg.xcodeproj */,
 				55FF5B83275ADBBC000B0D21 /* SFBAudioEngine.xcodeproj */,
 			);
 			name = Inform;
@@ -1449,6 +1459,9 @@
 				FF61DE6C29F0362C0047E7D8 /* libflic.a */,
 				FF61DE6E29F0362C0047E7D8 /* Tads2.zoomPlugin */,
 				FF61DE7029F0362C0047E7D8 /* Tads3.zoomPlugin */,
+				C3B134882E65083000FA4DA7 /* PCXTester */,
+				C3B1348A2E65083000FA4DA7 /* Magnetic Scrolls.zoomPlugin */,
+				C3B1348C2E65083000FA4DA7 /* magnetic */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1558,14 +1571,6 @@
 				553439FF2744A06400BB989E /* SwiftGlk.app */,
 				55343A012744A06400BB989E /* libglkmain.a */,
 				55AAA31527DEE38A00AAD2EF /* multiWinSwift */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		55FF5B4C275ADB78000B0D21 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				55FF5B63275ADB78000B0D21 /* Ogg.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1815,10 +1820,6 @@
 					ProjectRef = 55BFABF62744983B0049646A /* CocoaGlk.xcodeproj */;
 				},
 				{
-					ProductGroup = 55FF5B4C275ADB78000B0D21 /* Products */;
-					ProjectRef = 55FF5B4B275ADB78000B0D21 /* ogg.xcodeproj */;
-				},
-				{
 					ProductGroup = 55FF5B84275ADBBC000B0D21 /* Products */;
 					ProjectRef = 55FF5B83275ADBBC000B0D21 /* SFBAudioEngine.xcodeproj */;
 				},
@@ -2039,18 +2040,32 @@
 			remoteRef = 55BFAC132744983B0049646A /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		55FF5B63275ADB78000B0D21 /* Ogg.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = Ogg.framework;
-			remoteRef = 55FF5B62275ADB78000B0D21 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		55FF5B8A275ADBBC000B0D21 /* SFBAudioEngine.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
 			path = SFBAudioEngine.framework;
 			remoteRef = 55FF5B89275ADBBC000B0D21 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		C3B134882E65083000FA4DA7 /* PCXTester */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = PCXTester;
+			remoteRef = C3B134872E65083000FA4DA7 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		C3B1348A2E65083000FA4DA7 /* Magnetic Scrolls.zoomPlugin */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = "Magnetic Scrolls.zoomPlugin";
+			remoteRef = C3B134892E65083000FA4DA7 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		C3B1348C2E65083000FA4DA7 /* magnetic */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = magnetic;
+			remoteRef = C3B1348B2E65083000FA4DA7 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		FF61DE6229F0362C0047E7D8 /* ZoomNewSaveQL.appex */ = {
@@ -3005,11 +3020,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1.83.0;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 97V36B3QYK;
+				DEVELOPMENT_TEAM = 6U7YY3724Y;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -3034,6 +3050,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MARKETING_VERSION = 1.83.0;
+				OTHER_CFLAGS = "-Wno-declaration-after-statement";
 				OTHER_LDFLAGS = "-fobjc-arc";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.inform7.inform-compiler";
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -3073,12 +3090,13 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1.83.0;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
-				DEVELOPMENT_TEAM = 97V36B3QYK;
+				DEVELOPMENT_TEAM = 6U7YY3724Y;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -3101,6 +3119,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MARKETING_VERSION = 1.83.0;
+				OTHER_CFLAGS = "-Wno-declaration-after-statement";
 				OTHER_LDFLAGS = "-fobjc-arc";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.inform7.inform-compiler";
 				RUN_CLANG_STATIC_ANALYZER = YES;

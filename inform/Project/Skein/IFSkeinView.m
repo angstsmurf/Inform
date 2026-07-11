@@ -227,7 +227,7 @@ static NSDictionary* itemTextAttributes;
 	[layoutTree layoutSkein];
 
     // Resize the view to the size of the new layout
-    [self resizeView];
+//    [self resizeView];
 
     // Tell the report to update itself based on the new skein
     [skeinViewChildren updateReportDetails];
