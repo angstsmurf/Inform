@@ -1166,31 +1166,47 @@ static inline BOOL IsWhitespace(unichar c) {
                     // table runs past the edited region)
                     [lineStyles addObject: [self paragraphStyleForTabStops: 0]];
                 }
-                for (int formatLine = firstElasticLine; formatLine < lastElasticLine; formatLine++) {
-                    
-                    // Check if this line needs an update
-                    // XXX(norberg): this still doesn't work and I don't understand why
-                    if (!forceUpdateTabs) {
-                        NSParagraphStyle* currentPara = lineStyles[formatLine][NSParagraphStyleAttributeName];
-                        NSArray<NSTextTab*>* currentTabs = currentPara.tabStops;
-                        if (newTabStops.count == currentTabs.count) {
-                            BOOL tabsIdentical = YES;
-                            NSUInteger lim = newTabStops.count;
-                            for (NSUInteger i = 0; i < lim; ++i) {
-                                if (newTabStops[i].location != currentTabs[i].location) {
-                                    tabsIdentical = NO;
-                                    // All further lines also must be updated.
-                                    forceUpdateTabs = YES;
-                                    break;
-                                }
-                            }
-                            if (tabsIdentical) {
-                                // Nothing to update for this line.
-                                continue;
+                // Decide ONCE, for the whole elastic region, whether the shared column
+                // widths changed -- comparing the freshly computed tab stops against what
+                // is actually applied to the text storage, not the per-line lineStyles
+                // cache (which drifts out of sync after edits and caused issue #50).
+                BOOL widthsChanged = forceUpdateTabs;
+                if (!widthsChanged) {
+                    NSParagraphStyle* appliedStyle = nil;
+                    if (elasticRange.location < _textStorage.length) {
+                        appliedStyle = [_textStorage attribute: NSParagraphStyleAttributeName
+                                                       atIndex: elasticRange.location
+                                                effectiveRange: NULL];
+                    }
+                    NSArray<NSTextTab*>* appliedTabs = appliedStyle.tabStops;
+                    if (appliedTabs.count != newTabStops.count) {
+                        widthsChanged = YES;
+                    } else {
+                        for (NSUInteger i = 0; i < newTabStops.count; ++i) {
+                            if (newTabStops[i].location != appliedTabs[i].location) {
+                                widthsChanged = YES;
+                                break;
                             }
                         }
                     }
+                }
 
+                // Work out which lines of the region actually need re-tabbing:
+                //  - If the shared column widths changed, every line in the region must
+                //    get the new tab stops.
+                //  - If they did not, only the *edited* lines need it: Phase One has just
+                //    overwritten their paragraph style with the (non-elastic) default, so
+                //    without this they are left scrambled -- e.g. the row below a deleted
+                //    row (issue #50). The rest of the region is genuinely unchanged, so we
+                //    leave it alone to avoid re-tabbing the whole table on every keystroke.
+                int updateFrom = firstElasticLine;
+                int updateTo   = lastElasticLine;
+                if (!widthsChanged) {
+                    updateFrom = MAX(firstElasticLine, firstLine);
+                    updateTo   = MIN(lastElasticLine, lastLine + 1);
+                }
+
+                for (int formatLine = updateFrom; formatLine < updateTo; formatLine++) {
                     // Copy the styles for this line
                     NSMutableDictionary*		style		= [lineStyles[formatLine] mutableCopy];
                     NSMutableParagraphStyle*	paraStyle	= [style[NSParagraphStyleAttributeName] mutableCopy];
@@ -1200,7 +1216,7 @@ static inline BOOL IsWhitespace(unichar c) {
                     [paraStyle setTabStops: newTabStops];
                     style[NSParagraphStyleAttributeName] = paraStyle;
 
-                    // Replace the line style
+                    // Keep the cached line style in sync with what we apply
                     lineStyles[formatLine] = style;
 
                     // Update tabs paragraph style for this line
@@ -1211,11 +1227,13 @@ static inline BOOL IsWhitespace(unichar c) {
                                           range: NSMakeRange(formatFirstChar, formatLastChar-formatFirstChar)];
                     [_textStorage fixFontAttributeInRange: NSMakeRange(formatFirstChar, formatLastChar-formatFirstChar)];
                 }
-                
+
                 // Record that we have changed this range of attributes
-                changedRange = NSUnionRange(changedRange, elasticRange);
-                
-                // Advance the enclosing loop to skip the lines we just laid out
+                if (updateTo > updateFrom) {
+                    changedRange = NSUnionRange(changedRange, elasticRange);
+                }
+
+                // Advance the enclosing loop to skip the lines we just handled
                 if (line < lastElasticLine) {
                     line = lastElasticLine - 1;
                 }
