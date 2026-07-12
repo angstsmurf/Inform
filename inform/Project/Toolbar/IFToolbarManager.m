@@ -125,8 +125,15 @@ static const CGFloat  toolbarStatusWidth    = 300.0f;
 	searchDocsItem.label = [IFUtility localizedString: @"Search Documentation"];
 	searchProjectItem.label = [IFUtility localizedString: @"Search Project"];
 
-    toolbarStatusSpacingItem.minSize = NSMakeSize(10, 1);
-    toolbarStatusSpacingItem.maxSize = NSMakeSize(10000, 1);
+    // Let the system measure the item using constraints instead of the deprecated
+    // minSize/maxSize. A minimum width plus a low hugging priority lets this item act
+    // as a flexible spacer that grows to fill the available space.
+    toolbarStatusSpacingView.translatesAutoresizingMaskIntoConstraints = NO;
+    [toolbarStatusSpacingView.widthAnchor constraintGreaterThanOrEqualToConstant: 10].active = YES;
+    [toolbarStatusSpacingView setContentHuggingPriority: NSLayoutPriorityDefaultLow - 1
+                                         forOrientation: NSLayoutConstraintOrientationHorizontal];
+    [toolbarStatusSpacingView setContentCompressionResistancePriority: NSLayoutPriorityDefaultLow
+                                                       forOrientation: NSLayoutConstraintOrientationHorizontal];
     toolbarStatusSpacingItem.view = toolbarStatusSpacingView;
     toolbarStatusSpacingItem.label = @"";
 
@@ -457,10 +464,15 @@ static const CGFloat  toolbarStatusWidth    = 300.0f;
 		NSSearchField* searchDocs = [[NSSearchField alloc] initWithFrame: NSMakeRect(0,0,130,22)];
 		[searchDocs.cell setPlaceholderString: [IFUtility localizedString: @"Documentation"]];
 
-		item.minSize = NSMakeSize(70, 22);
-		item.maxSize = NSMakeSize(150, 22);
 		item.view = searchDocs;
 		[searchDocs sizeToFit];
+
+		searchDocs.translatesAutoresizingMaskIntoConstraints = NO;
+		[NSLayoutConstraint activateConstraints: @[
+			[searchDocs.widthAnchor constraintGreaterThanOrEqualToConstant: 70],
+			[searchDocs.widthAnchor constraintLessThanOrEqualToConstant: 150],
+			[searchDocs.heightAnchor constraintEqualToConstant: 22],
+		]];
         [searchDocs.cell setScrollable:YES];
 
 		[searchDocs setContinuous: NO];
@@ -475,10 +487,15 @@ static const CGFloat  toolbarStatusWidth    = 300.0f;
 		NSSearchField* searchProject = [[NSSearchField alloc] initWithFrame: NSMakeRect(0,0,130,22)];
 		[searchProject.cell setPlaceholderString: [IFUtility localizedString: @"Project"]];
 
-		item.minSize = NSMakeSize(70, 22);
-		item.maxSize = NSMakeSize(150, 22);
 		item.view = searchProject;
 		[searchProject sizeToFit];
+
+		searchProject.translatesAutoresizingMaskIntoConstraints = NO;
+		[NSLayoutConstraint activateConstraints: @[
+			[searchProject.widthAnchor constraintGreaterThanOrEqualToConstant: 70],
+			[searchProject.widthAnchor constraintLessThanOrEqualToConstant: 150],
+			[searchProject.heightAnchor constraintEqualToConstant: 22],
+		]];
         [searchProject.cell setScrollable:YES];
 
 		[searchProject setContinuous: NO];
@@ -491,9 +508,14 @@ static const CGFloat  toolbarStatusWidth    = 300.0f;
 		return item;
     } else if ([itemIdentifier isEqualToString: @"testSelectorItem"]) {
         testCasesPopUpButton = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 190, 22)];
-        item.minSize = NSMakeSize(100, 22);
-        item.maxSize = NSMakeSize(190, 22);
         item.view = testCasesPopUpButton;
+
+        testCasesPopUpButton.translatesAutoresizingMaskIntoConstraints = NO;
+        [NSLayoutConstraint activateConstraints: @[
+            [testCasesPopUpButton.widthAnchor constraintGreaterThanOrEqualToConstant: 100],
+            [testCasesPopUpButton.widthAnchor constraintLessThanOrEqualToConstant: 190],
+            [testCasesPopUpButton.heightAnchor constraintEqualToConstant: 22],
+        ]];
         testCasesPopUpButton.target = projectController;
         testCasesPopUpButton.action = @selector(testSelector:);
     }
